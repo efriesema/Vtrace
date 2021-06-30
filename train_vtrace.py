@@ -19,12 +19,12 @@ def train(episode,env_name):
     best_score = -np.inf
     goal_score = 195.0
 
-    nenvs = 8
+    nenvs = 1    #set to 1 for 
     rollout_length = 200
     minibatches = 10*8
     # Calculate the batch_size
     nbatch = nenvs * rollout_length
-    optimization_epochs = 4
+    optimization_epochs = 20
     
     device=torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     #initializing agent
@@ -96,7 +96,8 @@ plt.xlabel('episode')
 plt.show()
 
 #create animation
-from ppo import PPOAgent
+"""
+from vtrace import VtraceAgent
 
 import gym
 
@@ -153,3 +154,4 @@ def play(env, policy, time):
 
 play(env, agent.policy, 200)
 
+"""
