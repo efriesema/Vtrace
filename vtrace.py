@@ -50,13 +50,13 @@ class VtraceAgent:
         
         # Compute importance sampling weights: current policy / behavior policy.
         #behaviour_logits arethe logits from the actor network 
-        behaviour_logits,logits = self.policy(states)
-        behaviour_logits_tf = tf.convert_to_tensor(behaviour_logits.detach().numpy())
-        logits_tf = tf.convert_to_tensor(logits.detach().numpy())
-        values = nn.Softmax(dim=1)(logits)
+        behaviour_probs,policy_probs = self.policy(states)
+        behaviour_probs_tf = tf.convert_to_tensor(behaviour_probs.detach().numpy())
+        policy_probs_tf = tf.convert_to_tensor(policy_probs.detach().numpy())
+        values = policy_probs_tf
         #logits are the logits from current policy network
-        pi_behaviour = tfd.Categorical(logits=behaviour_logits_tf)
-        pi_target = tfd.Categorical(logits=logits_tf)
+        pi_behaviour = tfd.OneHotCategorical(probs=behaviour_probs_tf)
+        pi_target = tfd.OneHotCategorical(probs=policy_probs_tf)
         log_rhos = pi_target.log_prob(actions) - pi_behaviour.log_prob(actions)
          
 
