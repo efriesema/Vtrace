@@ -38,11 +38,11 @@ class VtraceAgent:
         
     
 
-    def update(self, log_prob_old, states, actions, rewards, discounts):
+    def update(self, log_probs_old, states, actions, rewards, discounts):
     
-        #traj_info = self.policy.act(states, actions)
         
         tfd = tfp.distributions
+        traj_info = self.policy.act(states, actions)
         states= states[:-1]
         actions = actions[:-1]  # [T-1]
         rewards = rewards[:-1]  # [T-1]
@@ -50,24 +50,21 @@ class VtraceAgent:
         
         # Compute importance sampling weights: current policy / behavior policy.
         #behaviour_logits arethe logits from the actor network 
-        behaviour_probs,policy_probs = self.policy(states)
-        behaviour_probs_tf = tf.convert_to_tensor(behaviour_probs.detach().numpy())
-        policy_probs_tf = tf.convert_to_tensor(policy_probs.detach().numpy())
-        values = policy_probs_tf
-        #logits are the logits from current policy network
-        pi_behaviour = tfd.OneHotCategorical(probs=behaviour_probs_tf)
-        pi_target = tfd.OneHotCategorical(probs=policy_probs_tf)
-        log_rhos = pi_target.log_prob(actions) - pi_behaviour.log_prob(actions)
+        
+        values = traj_info['v'].detach().numpy()
+        log_rhos =traj_info['log_pi_a'] - log_probs_old
+        target_probs =tf.convert_to_tensor(torch.exp(traj_info['log_pi_a']).detach().numpy())
+        pi_target = tfd.Categorical(probs=target_probs[:-1])
          
 
         # Critic loss.
         #vs are the vtrace targets 
         vtrace_returns = trfl.vtrace_from_importance_weights(
-          log_rhos=tf.cast(log_rhos, tf.float32),
+          log_rhos=log_rhos,
           discounts=tf.cast(self.discount * discounts, tf.float32),
           rewards=tf.cast(rewards, tf.float32),
-          values=tf.cast(values[:-1], tf.float32),
-          bootstrap_value=values[-1],
+          values=values[:-1],
+          bootstrap_value= values[-1],
           )
         #values are softmax values of current policy
         critic_loss = tf.square(vtrace_returns.vs - values)
@@ -85,8 +82,8 @@ class VtraceAgent:
 
         # Combine weighted sum of actor & critic losses.
         loss = tf.reduce_mean(policy_gradient_loss +
-                            self._baseline_cost * critic_loss +
-                            self._entropy_cost * entropy_loss)
+                            self.baseline_cost * critic_loss +
+                            self.entropy_cost * entropy_loss)
         
         self.optimizer.zero_grad()
         (loss).backward()

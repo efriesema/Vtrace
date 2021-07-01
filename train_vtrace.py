@@ -1,10 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Mon Jun 21 10:20:40 2021
 
-@author: efriesema
-"""
 
 import numpy as np
 from collections import deque
@@ -20,7 +16,7 @@ def train(episode,env_name):
     goal_score = 195.0
 
     nenvs = 1    #set to 1 for 
-    rollout_length = 200
+    rollout_length = 1600
     minibatches = 10*8
     # Calculate the batch_size
     nbatch = nenvs * rollout_length
@@ -74,7 +70,7 @@ def train(episode,env_name):
             print('\rEpisode {}\tAverage Score: {:.2f}'.format(i_episode, np.mean(scores_window)))
             print(total_rewards)
         if np.mean(scores_window)>=goal_score and np.mean(scores_window)>=best_score:            
-            torch.save(agent.policy.state_dict(), "policy_cartpole.pth")
+            torch.save(agent.policy.state_dict(), "vtrace_cartpole.pth")
             best_score = np.mean(scores_window)
     
     return mean_rewards, loss_storage
