@@ -58,7 +58,7 @@ def train(episode,env_name):
                 mb_states = states[inds]
                 mb_actions = actions[inds]
                 mb_returns = returns[inds]
-                loss_p, loss_v, loss_ent = agent.update(mb_log_probs_old, mb_states, mb_actions, mb_returns, mb_discounts)
+                loss_p, loss_v, loss_ent = agent.update(mb_log_probs_old, mb_states, mb_actions, mb_returns, mb_discounts,vals_last)
                 loss_storage.append([loss_p, loss_v, loss_ent])
                 
         total_rewards = np.sum(rewards, axis=0)

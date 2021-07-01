@@ -38,33 +38,31 @@ class VtraceAgent:
         
     
 
-    def update(self, log_probs_old, states, actions, rewards, discounts):
+    def update(self, log_probs_old, states, actions, rewards, discounts, bootstrap_values):
     
         
         tfd = tfp.distributions
         traj_info = self.policy.act(states, actions)
-        states= states[:-1]
-        actions = actions[:-1]  # [T-1]
-        rewards = rewards[:-1]  # [T-1]
-        discounts = discounts[:-1]  # [T-1]
-        
+
         # Compute importance sampling weights: current policy / behavior policy.
         #behaviour_logits arethe logits from the actor network 
         
+        bootstrap_values_np= np.array(bootstrap_values)
         values = traj_info['v'].detach().numpy()
         log_rhos =traj_info['log_pi_a'] - log_probs_old
         target_probs =tf.convert_to_tensor(torch.exp(traj_info['log_pi_a']).detach().numpy())
-        pi_target = tfd.Categorical(probs=target_probs[:-1])
+        pi_target = tfd.Categorical(probs=target_probs)
          
 
         # Critic loss.
         #vs are the vtrace targets 
+        print(bootstrap_values_np)
         vtrace_returns = trfl.vtrace_from_importance_weights(
           log_rhos=log_rhos,
-          discounts=tf.cast(self.discount * discounts, tf.float32),
-          rewards=tf.cast(rewards, tf.float32),
-          values=values[:-1],
-          bootstrap_value= values[-1],
+          discounts=self.discount * discounts,
+          rewards=rewards,
+          values=values,
+          ##bootstrap_value= bootstrap_values_np,
           )
         #values are softmax values of current policy
         critic_loss = tf.square(vtrace_returns.vs - values)
