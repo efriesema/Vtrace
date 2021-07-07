@@ -15,7 +15,7 @@ def train(episode,env_name):
     best_score = -np.inf
     goal_score = 195.0
 
-    nenvs = 1    #set to 1 for 
+    nenvs = 2    #set to 1 for 
     rollout_length = 1600
     minibatches = 10*8
     # Calculate the batch_size

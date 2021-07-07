@@ -62,7 +62,7 @@ class VtraceAgent:
           discounts=self.discount * discounts,
           rewards=rewards,
           values=values,
-          ##bootstrap_value= bootstrap_values_np,
+          bootstrap_value= bootstrap_values_np,
           )
         #values are softmax values of current policy
         critic_loss = tf.square(vtrace_returns.vs - values)
